@@ -1,12 +1,14 @@
 package EasyCommand;
 
-import javafx.scene.control.Button;
-import javafx.scene.control.Tooltip;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
+import javafx.stage.Stage;
 
-import java.io.IOException;
-
-// Command newButton = new Command(btn1, "gedit", operating_system);
-// newButton.activateCommand();
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 
 public class Command {
 
@@ -18,7 +20,7 @@ public class Command {
     private String[] args;
 
 
-    public Command(Button btn, String command, String description, String OS) {
+    Command(Button btn, ColorPicker color, String command, String description, String OS) {
         this.btn = btn;
         this.command = command;
         this.OpSys = OS;
@@ -26,18 +28,19 @@ public class Command {
         this.description = description;
 
         this.btn.setOnAction(e -> reRoute());
+        this.btn.setStyle("-fx-background-color: " + color.getValue().toString().replace("0x", "#"));
         this.btn.setTooltip(new Tooltip(this.description));
     }
 
     private void reRoute() {
         try {
             activateCommand();
-        } catch(IOException e) {
+        } catch(Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void activateCommand() throws IOException {
+    private void activateCommand() throws Exception {
 
         btn.setText("Running");
 
@@ -54,26 +57,69 @@ public class Command {
         }
     }
 
-    public void runWindows() throws IOException {
+    private void runWindows() throws Exception {
         args = new String[] {"cmd", "/c start", command};
         Process proc = new ProcessBuilder(args).start();
 
-        btn.setText(btnText);
-    }
-
-    public void runMac() throws IOException {
-        args = new String[] {"/bin/bash", "-c", command};
-        Process proc = new ProcessBuilder(args).start();
+        readOutput(proc);
 
         btn.setText(btnText);
     }
 
-    public void runLinux() throws IOException {
+    private void runMac() throws Exception {
         args = new String[] {"/bin/bash", "-c", command};
         Process proc = new ProcessBuilder(args).start();
 
+        readOutput(proc);
+
+        btn.setText(btnText);
+    }
+
+    private void runLinux() throws Exception {
+        args = new String[] {"/bin/bash", "-c", command};
+        Process proc = new ProcessBuilder(args).start();
+
+        readOutput(proc);
+
         btn.setText(btnText);
 
+    }
+
+    private void readOutput(Process proc) throws Exception {
+
+        GridPane newRoot = new GridPane();
+        newRoot.setStyle("-fx-background-color: #ABB2B9");
+        Stage stage = new Stage();
+
+        newRoot.setHgap(10);
+        newRoot.setVgap(10);
+
+        TextArea outputField = new TextArea();
+        outputField.setStyle("-fx-control-inner-background: #222C36; -fx-font-family: Consolas; -fx-highlight-text-fill: #860202; -fx-text-fill: #036E00; -fx-border-color: red ;");
+        outputField.setPrefWidth(600);
+        outputField.setPrefHeight(1000);
+        GridPane.setConstraints(outputField, 0, 0);
+        GridPane.setHgrow(outputField, Priority.ALWAYS);
+        GridPane.setVgrow(outputField, Priority.ALWAYS);
+
+        newRoot.getChildren().add(outputField);
+
+        stage.setTitle("Terminal Output");
+        stage.setScene(new Scene(newRoot, 600, 400));
+        stage.show();
+
+        ArrayList<String> output = new ArrayList<>();
+
+        BufferedReader reader =
+                new BufferedReader(new InputStreamReader(proc.getInputStream()));
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            output.add(line + "\n");
+            outputField.setText(String.join("", output));
+        }
+
+        proc.waitFor();
     }
 
     public String getCommand() {
