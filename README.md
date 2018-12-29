@@ -1,8 +1,6 @@
 # EasyCommand
 A java program that can save, store, and run terminal commands for Linux, Windows, and Mac.
 
-__*80% Complete*__
-
 ## Features
 
 - Create unlimited command saves
